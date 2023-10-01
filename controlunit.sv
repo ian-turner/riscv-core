@@ -6,7 +6,11 @@ module controlunit(
 	input logic [11:0] csr,
 
 	// outputs
-	// ...
+	output logic alusrc,
+	output logic regwrite,
+	output logic [2:0] regsel,
+	output logic [4:0] aluop,
+	output logic gpio_we
 );
 
 endmodule

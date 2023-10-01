@@ -1,4 +1,9 @@
-module cpu(input logic clk /* clock */, input logic rst_n /* reset signal */);
+module cpu(
+	input logic clk, // clock
+	input logic rst_n, // reset signal
+	input logic [31:0] io0_in, // input signal
+	input logic [31:0] io0_out, // output signal
+);
 
 	logic [31:0] inst_ram [4095:0]; // declaring ram
 	initial $readmemh("program.rom", inst_ram); // reading program into memory
