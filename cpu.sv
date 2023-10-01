@@ -13,5 +13,6 @@ module cpu(input logic clk /* clock */, input logic rst_n /* reset signal */);
 		end else begin // fetching the next instruction
 			PC_FETCH <= PC_FETCH + 1'b1;
 			instruction_EX <= inst_ram[PC_FETCH];
+		end
 	end
 endmodule
