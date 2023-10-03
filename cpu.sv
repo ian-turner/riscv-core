@@ -11,26 +11,44 @@ module cpu(
 	logic [11:0] PC_FETCH = 12'd0;
 	logic [31:0] instruction_EX;
 
-	// values to hold instruction fields
+	// holding decoded instruction fields
 	logic [2:0] instruction_type;
 	logic [6:0] opcode;
-	// R-type
 	logic [6:0] funct7;
 	logic [5:0] rs2;
 	logic [5:0] rs1;
 	logic [2:0] funct3;
 	logic [4:0] rd;
-	// I-type
 	logic [11:0] imm_I;
-	// U-type
 	logic [19:0] imm_U;
 	
 	// holding output of control unit
-	logic alusrc;
-	logic regwrite;
-	logic [2:0] regsel;
-	logic [4:0] aluop;
-	logic gpio_we;
+	logic alusrc_EX;
+	logic regwrite_EX;
+	logic [2:0] regsel_EX;
+	logic [4:0] aluop_EX;
+	logic GPIO_we;
+
+	// glue registers for register file
+	logic [31:0] readdata1;
+	logic [31:0] readdata2;
+	logic [31:0] regsel_WB;
+	logic [4:0] regdest_WB;
+
+	// glue registers for control unit
+	logic regwrite_WB;
+	logic GPIO_we_WB;
+	logic [31:0] GPIO_out;
+
+	// glue registers for regsel mux
+	logic GPIO_in_WB;
+	logic [19:0] imm_U_WB;
+	logic [31:0] writedata;
+	logic [31:0] R_WB;
+
+	// glue registers for ALU
+	logic [31:0] R_EX;
+	logic [31:0] ALU_INP_B;
 
 	// connecting the decoder
 	decoder _decoder (
@@ -49,21 +67,57 @@ module cpu(
 	// connecting the register file
 	regfile _regfile (
 		.clk(clk),
-		.we(regwrite),
+		.we(regwrite_WB),
 		.readaddr1(rs1),
 		.readaddr2(rs2),
-		.writeaddr(rd),
-//		.writedata() // comes from regsel MUX
+		.writeaddr(regdest_WB),
+		.writedata(writedata),
+
+		.readdata1(readdata1),
+		.readdata2(readdata2)
 	);
 
 	// connecting the control unit
 	controlunit _controlunit (
-		.alusrc(alusrc),
-		.regwrite(regwrite),
+		// inputs
+		.opcode(opcode),
+		.funct3(funct3),
+		.funct7(funct7),
+		.csr(imm_I),
+
+		// outputs
+		.alusrc(alusrc_EX),
+		.regwrite(regwrite_EX),
 		.regsel(regsel),
-		.aluop(aluop),
-		.gpio_we(gpio_we)
+		.aluop(aluop_EX),
+		.gpio_we(GPIO_we)
 	);
+ 
+	// connecting the ALU
+	alu _alu (
+		.A(readdata1),
+		.B(ALU_INP_B),
+		.R(R_EX),
+		.op(aluop)
+	);
+
+	always_comb begin
+		case (regsel_WB)
+			2'd0 : writedata = GPIO_in_WB;
+			2'd1 : writedata = imm_U_WB;
+			2'd2 : writedata = R_WB;
+		endcase
+
+		if (alusrc_EX) begin
+			if (imm_I[11]==0) begin
+				ALU_INP_B = {20'b0, imm_I};
+			end else begin
+				ALU_INP_B = {20'b0-1, imm_I};
+			end
+		end else begin
+			ALU_INP_B = readdata2;
+		end
+	end
 
 	always_ff @(posedge clk) begin
 		if (~rst_n) begin // starting at 0
