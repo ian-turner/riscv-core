@@ -93,7 +93,25 @@ module top (
 		end
 	end
 
+	// connecting displays to cpu output
+	logic [31:0] cpu_io0_out;
+
 	// connecting cpu
-	cpu mycpu(.clk(CLOCK_50), .rst_n(KEY[0]));
+	cpu mycpu(
+		.clk(CLOCK_50),
+		.rst_n(KEY[0]),
+		.io0_in({14'b0, SW}), // connecting switches
+		.io0_out(cpu_io0_out) // connecting hex displays
+	);
+
+	// connecting hex displays
+	hexdriver hex0 (.val(cpu_io0_out[3:0]), .HEX(HEX0));
+	hexdriver hex1 (.val(cpu_io0_out[7:4]), .HEX(HEX1));
+	hexdriver hex2 (.val(cpu_io0_out[11:8]), .HEX(HEX2));
+	hexdriver hex3 (.val(cpu_io0_out[15:12]), .HEX(HEX3));
+	hexdriver hex4 (.val(cpu_io0_out[19:16]), .HEX(HEX4));
+	hexdriver hex5 (.val(cpu_io0_out[23:20]), .HEX(HEX5));
+	hexdriver hex6 (.val(cpu_io0_out[27:24]), .HEX(HEX6));
+	hexdriver hex7 (.val(cpu_io0_out[31:28]), .HEX(HEX7));
 
 endmodule

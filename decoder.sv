@@ -1,9 +1,9 @@
-module instruction_decoder(
-	input logic [31:0] instructon,
+module decoder(
+	input logic [31:0] instruction,
 
 	// outputs
 	
-	output logic [2:0] inst_type,
+	output logic [2:0] instruction_type,
 	output logic [6:0] opcode,
 
 	// R-type
@@ -29,15 +29,6 @@ module instruction_decoder(
 		rd <= instruction[11:7];
 		imm_I <= instruction[31:20];
 		imm_U <= instruction[31:12];
-
-		// determining instruction type
-		inst_type = 3'b000;
-		case (opcode)
-			6'b0110011: inst_type <= 3'b000;
-			6'b1110011: inst_type <= 3'b000;
-			6'b0010011: inst_type <= 3'b001;
-			6'b0110111: inst_type <= 3'b010;
-		endcase
 	end
 
 endmodule
