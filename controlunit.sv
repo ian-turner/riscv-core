@@ -15,4 +15,20 @@ module controlunit(
 	output logic gpio_we		// enables writing to the output register
 );
 
+	// combinational logic block
+	always_comb begin
+		// default values
+		alusrc = 1'd0;
+		regwrite = 1'd0;
+		regsel = 3'd0;
+		aluop = 5'd0;
+		gpio_we = 1'd0;
+
+		// csrrw instruction
+		if (opcode==7'b1110011 && funct3==3'b001) begin
+			gpio_we=1'd1; // enable io output
+			regwrite=1'd1; // enable writeback
+		end
+	end
+
 endmodule

@@ -12,7 +12,6 @@ module cpu(
 	logic [31:0] instruction_EX;
 
 	// holding decoded instruction fields
-	logic [2:0] instruction_type;
 	logic [6:0] opcode;
 	logic [6:0] funct7;
 	logic [5:0] rs2;
@@ -26,22 +25,22 @@ module cpu(
 	logic alusrc_EX;
 	logic regwrite_EX;
 	logic [2:0] regsel_EX;
-	logic [4:0] aluop_EX;
+	logic [3:0] aluop_EX;
 	logic GPIO_we;
 
 	// glue registers for register file
 	logic [31:0] readdata1;
 	logic [31:0] readdata2;
-	logic [31:0] regsel_WB;
+	logic [2:0] regsel_WB;
 	logic [4:0] regdest_WB;
 
 	// glue registers for control unit
 	logic regwrite_WB;
 	logic GPIO_we_WB;
-	logic [31:0] GPIO_out;
+	logic [31:0] GPIO_out_WB;
 
 	// glue registers for regsel mux
-	logic GPIO_in_WB;
+	logic [31:0] GPIO_in_WB;
 	logic [19:0] imm_U_WB;
 	logic [31:0] writedata;
 	logic [31:0] R_WB;
@@ -53,7 +52,6 @@ module cpu(
 	// connecting the decoder
 	decoder _decoder (
 		.instruction(instruction_EX),
-		.instruction_type(instruction_type),
 		.funct3(funct3),
 		.funct7(funct7),
 		.rs1(rs1),
@@ -88,7 +86,7 @@ module cpu(
 		// outputs
 		.alusrc(alusrc_EX),
 		.regwrite(regwrite_EX),
-		.regsel(regsel),
+		.regsel(regsel_EX),
 		.aluop(aluop_EX),
 		.gpio_we(GPIO_we)
 	);
@@ -106,9 +104,10 @@ module cpu(
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = imm_U_WB;
 			2'd2 : writedata = R_WB;
+			default: writedata = 32'b0;
 		endcase
 
-		if (alusrc_EX) begin
+		if (alusrc_EX==1'b1) begin
 			if (imm_I[11]==0) begin
 				ALU_INP_B = {20'b0, imm_I};
 			end else begin
@@ -127,6 +126,17 @@ module cpu(
 			// fetching the next instruction
 			PC_FETCH <= PC_FETCH + 1'b1;
 			instruction_EX <= inst_ram[PC_FETCH];
+
+			// copying execute registers to writeback registers
+			regdest_WB <= rd;
+			regwrite_WB <= regwrite_EX;
+			regsel_WB <= regsel_EX;
+			GPIO_we_WB <= GPIO_we;
+			GPIO_in_WB <= io0_in;
+			GPIO_out_WB <= readdata1;
+			R_WB <= R_EX;
+			imm_U_WB <= imm_U;
+			if (GPIO_we_WB) io0_out <= GPIO_out_WB;
 		end
 	end
 
