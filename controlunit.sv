@@ -11,7 +11,7 @@ module controlunit(
 	output logic regwrite,
 	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
-	output logic [4:0] aluop,	
+	output logic [3:0] aluop,	
 	output logic gpio_we		// enables writing to the output register
 );
 
@@ -20,8 +20,8 @@ module controlunit(
 		// default values
 		alusrc=1'd0;
 		regwrite=1'd0;
-		regsel=3'd0;
-		aluop=5'd0;
+		regsel=2'd0;
+		aluop=4'd0;
 		gpio_we=1'd0;
 
 		// csrrw instruction
@@ -30,15 +30,26 @@ module controlunit(
 			regwrite=1'd1; // enable writeback
 		end
 
+		// R-type instructions
+		if (opcode==7'b0110011) begin
+			regwrite=1'd1;
+			regsel=2'd2;
+			if (funct7==7'd0 && funct3==3'b000) aluop=4'b0011; // add
+			if (funct7==7'b0100000 && funct3==3'b000) aluop=4'b0100; // sub
+		end
+
 		// I-type instructions
 		if (opcode==7'b0010011) begin
 			regwrite=1'd1;
-			// addi
-			if (funct3==3'b000) begin
-				aluop=4'b0011;
-				alusrc=1'd1;
-				regsel=2'd2;
-			end
+			alusrc=1'd1;
+			regsel=2'd2;
+			if (funct3==3'b000) aluop=4'b0011; // addi
+		end
+
+		// U-type instructions
+		if (opcode==7'b0110111) begin
+			regwrite=1'd1;
+			regsel=2'd1;
 		end
 	end
 
