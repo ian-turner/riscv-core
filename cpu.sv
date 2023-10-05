@@ -96,7 +96,7 @@ module cpu(
 		.A(readdata1),
 		.B(ALU_INP_B),
 		.R(R_EX),
-		.op(aluop)
+		.op(aluop_EX)
 	);
 
 	always_comb begin
