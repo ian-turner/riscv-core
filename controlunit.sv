@@ -34,8 +34,23 @@ module controlunit(
 		if (opcode==7'b0110011) begin
 			regwrite=1'd1;
 			regsel=2'd2;
-			if (funct7==7'd0 && funct3==3'b000) aluop=4'b0011; // add
-			if (funct7==7'b0100000 && funct3==3'b000) aluop=4'b0100; // sub
+			if (funct7==7'b0000000) begin
+				if (funct3==3'b000) aluop=4'b0011; // add
+				if (funct3==3'b111) aluop=4'b0000; // and
+				if (funct3==3'b110) aluop=4'b0001; // or
+				if (funct3==3'b100) aluop=4'b0010; // xor
+				if (funct3==3'b001) aluop=4'b1000; // sll
+				if (funct3==3'b101) aluop=4'b1001; // srl
+				if (funct3==3'b010) aluop=4'b1100; // slt
+				if (funct3==3'b011) aluop=4'b1101; // sltu
+			end else if (funct7==7'b0100000) begin
+				if (funct3==3'b000) aluop=4'b0100; // sub
+				if (funct3==3'b101) aluop=4'b1010; // sra
+			end else if (funct7==7'b0000001) begin
+				if (funct3==3'b000) aluop=4'b0101; // mul
+				if (funct3==3'b001) aluop=4'b0110; // mulh
+				if (funct3==3'b011) aluop=4'b0111; // mulhu
+			end
 		end
 
 		// I-type instructions
@@ -44,6 +59,9 @@ module controlunit(
 			alusrc=1'd1;
 			regsel=2'd2;
 			if (funct3==3'b000) aluop=4'b0011; // addi
+			if (funct3==3'b111) aluop=4'b0011; // andi
+			if (funct3==3'b110) aluop=4'b0001; // ori
+			if (funct3==3'b100) aluop=4'b0010; // xori
 		end
 
 		// U-type instructions
