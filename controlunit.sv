@@ -63,6 +63,8 @@ module controlunit(
 			if (funct3==3'b110) aluop=4'b0001; // ori
 			if (funct3==3'b100) aluop=4'b0010; // xori
 			if (funct3==3'b001) aluop=4'b1000; // slli
+			if (funct3==3'b101) aluop=4'b1010; // srai
+			if (funct3==3'b101) aluop=4'b1001; // srli
 		end
 
 		// U-type instructions
