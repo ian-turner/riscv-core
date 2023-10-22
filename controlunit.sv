@@ -59,7 +59,7 @@ module controlunit(
 			alusrc=1'd1;
 			regsel=2'd2;
 			if (funct3==3'b000) aluop=4'b0011; // addi
-			if (funct3==3'b111) aluop=4'b0011; // andi
+			if (funct3==3'b111) aluop=4'b0000; // andi
 			if (funct3==3'b110) aluop=4'b0001; // ori
 			if (funct3==3'b100) aluop=4'b0010; // xori
 			if (funct3==3'b001) aluop=4'b1000; // slli

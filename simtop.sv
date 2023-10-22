@@ -51,10 +51,13 @@ module simtop;
 
 		// 10 ticks = 1 clock tick
 
-		#10 // fetch stage of instruction 1
+		#1000; // <- 100 clock ticks
 
-		// addi x1, zero, 10
-		$display("%d", _cpu.instruction_EX);
+		// verify register file
+		// we can ignore 0 register because 0 is hard coded in regfile
+		for (int i=0; i<32; i++) begin
+			$display("register %d: 0x%h", i, _cpu._regfile.mem[i]);
+		end
 	end
 	
 	// drive clock
