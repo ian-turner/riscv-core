@@ -105,13 +105,13 @@ module top (
 	);
 
 	// connecting hex displays
-	hexdriver hex0 (.val(cpu_io0_out[3:0]), .HEX(HEX0));
-	hexdriver hex1 (.val(cpu_io0_out[7:4]), .HEX(HEX1));
-	hexdriver hex2 (.val(cpu_io0_out[11:8]), .HEX(HEX2));
-	hexdriver hex3 (.val(cpu_io0_out[15:12]), .HEX(HEX3));
-	hexdriver hex4 (.val(cpu_io0_out[19:16]), .HEX(HEX4));
-	hexdriver hex5 (.val(cpu_io0_out[23:20]), .HEX(HEX5));
-	hexdriver hex6 (.val(cpu_io0_out[27:24]), .HEX(HEX6));
-	hexdriver hex7 (.val(cpu_io0_out[31:28]), .HEX(HEX7));
+	hexdriver hex0 (.val(cpu_io0_out[31:28]), .HEX(HEX0));
+	hexdriver hex1 (.val(cpu_io0_out[27:24]), .HEX(HEX1));
+	hexdriver hex2 (.val(cpu_io0_out[23:20]), .HEX(HEX2));
+	hexdriver hex3 (.val(cpu_io0_out[19:16]), .HEX(HEX3));
+	hexdriver hex4 (.val(cpu_io0_out[15:12]), .HEX(HEX4));
+	hexdriver hex5 (.val(cpu_io0_out[11:8]), .HEX(HEX5));
+	hexdriver hex6 (.val(cpu_io0_out[7:4]), .HEX(HEX6));
+	hexdriver hex7 (.val(cpu_io0_out[3:0]), .HEX(HEX7));
 
 endmodule

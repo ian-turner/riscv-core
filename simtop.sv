@@ -15,7 +15,7 @@ module simtop;
 		//////////// CLOCK //////////
 		.CLOCK_50(clk),
 		.CLOCK2_50(),
-	    .CLOCK3_50(),
+	    	.CLOCK3_50(),
 
 		//////////// LED //////////
 		.LEDG(),
@@ -38,17 +38,33 @@ module simtop;
 		.HEX7(HEX7)
 	);
 
+	logic [31:0] io0_out;
+	logic [31:0] io0_in;
+
+	cpu _cpu(clk, KEY[0], io0_in, io0_out);
+
 	// pulse reset (active low)
 	initial begin
 		KEY <= 4'he;
 		#10;
 		KEY <= 4'hf;
+
+		// 10 ticks = 1 clock tick
+
+		#10 // fetch stage of instruction 1
+
+		// addi x1, zero, 10
+		$display("%d", _cpu.instruction_EX);
 	end
 	
 	// drive clock
 	always begin
 		clk <= 1'b0; #5;
 		clk <= 1'b1; #5;
+	end
+
+	always_comb begin
+		io0_in = {14'b0, SW};
 	end
 	
 	// assign simulated switch values

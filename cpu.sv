@@ -6,21 +6,22 @@ module cpu(
 );
 
 	logic [31:0] inst_ram [4095:0]; // declaring ram
-	initial $readmemh("program.rom", inst_ram); // reading program into memory
+	initial $readmemh("instmem.dat", inst_ram); // reading program into memory
 
-	logic [11:0] PC_FETCH = 12'd0;
+	logic [11:0] PC_FETCH;// = 12'd0;
 	logic [31:0] instruction_EX;
 
 	// holding decoded instruction fields
 	logic [6:0] opcode;
 	logic [6:0] funct7;
-	logic [5:0] rs2;
-	logic [5:0] rs1;
+	logic [4:0] rs2;
+	logic [4:0] rs1;
 	logic [2:0] funct3;
 	logic [4:0] rd;
 	logic [11:0] imm_I;
 	logic [19:0] imm_U;
-	
+	logic Z;
+
 	// holding output of control unit
 	logic alusrc_EX;
 	logic regwrite_EX;
@@ -96,7 +97,8 @@ module cpu(
 		.A(readdata1),
 		.B(ALU_INP_B),
 		.R(R_EX),
-		.op(aluop_EX)
+		.op(aluop_EX),
+		.zero(Z)
 	);
 
 	always_comb begin
