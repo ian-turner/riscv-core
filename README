@@ -1,0 +1,18 @@
+Testing:
+
+Select the type of instruction you want to test:
+
+- U and I type:
+
+1. Assemble `iutype.asm` to hex instructions in RARS as `iutype.rom`
+2. Run `cat iutype.rom > instmem.dat`
+
+- R type:
+
+1. Assemble `rtype.asm` to hex instructions in RARS as `rtype.rom`
+2. Run `cat rtype.rom > instmem.dat`
+
+- Finally for both:
+
+3. Run './csce611.sh testbench'
+4. Compare register file output with RARS registers

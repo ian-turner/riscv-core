@@ -51,7 +51,7 @@ module simtop;
 
 		// 10 ticks = 1 clock tick
 
-		#1000; // <- 100 clock ticks
+		#10000; // <- 1000 clock ticks
 
 		// verify register file
 		// we can ignore 0 register because 0 is hard coded in regfile
