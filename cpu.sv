@@ -2,7 +2,9 @@ module cpu(
 	input logic clk, // clock
 	input logic rst_n, // reset signal
 	input logic [31:0] io0_in, // input signal
-	output logic [31:0] io0_out // output signal
+	input logic [31:0] io1_in, // input signal
+	output logic [31:0] io2_out, // output signal
+	output logic [31:0] io3_out // output signal
 );
 
 	logic [31:0] inst_ram [4095:0]; // declaring ram
@@ -134,11 +136,18 @@ module cpu(
 			regwrite_WB <= regwrite_EX;
 			regsel_WB <= regsel_EX;
 			GPIO_we_WB <= GPIO_we;
-			GPIO_in_WB <= io0_in;
+//			GPIO_in_WB <= io0_in;
+			if (imm_I==12'd0) begin
+				GPIO_in_WB <= io0_in;
+			end else if (imm_I==12'd1) begin
+				GPIO_in_WB <= io1_in;
+			end else begin
+				GPIO_in_WB <= 32'b0;
+			end
 			GPIO_out_WB <= readdata1;
 			R_WB <= R_EX;
 			imm_U_WB <= imm_U;
-			if (GPIO_we_WB) io0_out <= GPIO_out_WB;
+			if (GPIO_we_WB) io2_out <= GPIO_out_WB;
 		end
 	end
 

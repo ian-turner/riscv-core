@@ -74,4 +74,4 @@ mulhu x2, x2, x1
 mulhu x7, x3, x5
 or x6, x6, x7
 
-csrrw zero, 0, x6		# writing back out to hex
+csrrw zero, 2, x6		# writing back out to hex
