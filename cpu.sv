@@ -11,7 +11,11 @@ module cpu(
 	initial $readmemh("instmem.dat", inst_ram); // reading program into memory
 
 	logic [11:0] PC_FETCH;// = 12'd0;
+	logic [11:0] PC_EX;
 	logic [31:0] instruction_EX;
+
+	logic stall_FETCH;
+	logic stall_EX = 1'b0;
 
 	// holding decoded instruction fields
 	logic [6:0] opcode;
@@ -108,6 +112,7 @@ module cpu(
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
+			2'd3 : writedata = PC_EX;
 			default: writedata = 32'b0;
 		endcase
 
@@ -128,22 +133,21 @@ module cpu(
 			instruction_EX <= 32'd0;
 		end else begin
 			// fetching the next instruction
-			PC_FETCH <= PC_FETCH + 1'b1;
-			instruction_EX <= inst_ram[PC_FETCH];
+			if (stall_FETCH) begin
+				instruction_EX <= 32'd0;
+			end else begin
+				PC_FETCH <= PC_FETCH + 1'b1;
+				instruction_EX <= inst_ram[PC_FETCH];
+			end
+
+			stall_EX <= stall_FETCH;
 
 			// copying execute registers to writeback registers
 			regdest_WB <= rd;
 			regwrite_WB <= regwrite_EX;
 			regsel_WB <= regsel_EX;
 			GPIO_we_WB <= GPIO_we;
-//			GPIO_in_WB <= io0_in;
-			if (imm_I==12'd0) begin
-				GPIO_in_WB <= io0_in;
-			end else if (imm_I==12'd1) begin
-				GPIO_in_WB <= io1_in;
-			end else begin
-				GPIO_in_WB <= 32'b0;
-			end
+			GPIO_in_WB <= io0_in;
 			GPIO_out_WB <= readdata1;
 			R_WB <= R_EX;
 			imm_U_WB <= imm_U;
