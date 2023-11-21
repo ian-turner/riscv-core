@@ -5,6 +5,7 @@ module controlunit(
 	input logic [6:0] funct7,
 	input logic [11:0] csr,
 	input logic stall_EX,
+	output logic stall_FETCH,
 
 	// outputs
 	output logic alusrc,		// chooses between readdata2 and imm for
@@ -13,11 +14,8 @@ module controlunit(
 	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
 	output logic [3:0] aluop,	
-	output logic stall_FETCH,
 	output logic gpio_we		// enables writing to the output register
 );
-
-	assign stall_FETCH = 1'b0;	// TEMP
 
 	// combinational logic block
 	always_comb begin
@@ -31,12 +29,12 @@ module controlunit(
 		// csrrw instruction
 		if (opcode==7'b1110011 && funct3==3'b001) begin
 			gpio_we=1'd1; // enable io output
-			regwrite = ~stall_EX & 1'd1; // enable writeback
+			regwrite = 1'd1; // enable writeback
 		end
 
 		// R-type instructions
 		if (opcode==7'b0110011) begin
-			regwrite = ~stall_EX & 1'd1;
+			regwrite = 1'd1;
 			regsel=2'd2;
 			if (funct7==7'b0000000) begin
 				if (funct3==3'b000) aluop=4'b0011; // add
@@ -59,7 +57,7 @@ module controlunit(
 
 		// I-type instructions
 		if (opcode==7'b0010011) begin
-			regwrite = ~stall_EX & 1'd1;
+			regwrite = 1'd1;
 			alusrc=1'd1;
 			regsel=2'd2;
 			if (funct3==3'b000) aluop=4'b0011; // addi
@@ -73,9 +71,12 @@ module controlunit(
 
 		// U-type instructions
 		if (opcode==7'b0110111) begin
-			regwrite = ~stall_EX & 1'd1;
+			regwrite = 1'd1;
 			regsel=2'd1;
 		end
+
+		// stalling instruction
+		if (stall_EX==1'b1) regwrite = 1'b0;
 	end
 
 endmodule

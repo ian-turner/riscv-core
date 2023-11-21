@@ -10,12 +10,17 @@ module cpu(
 	logic [31:0] inst_ram [4095:0]; // declaring ram
 	initial $readmemh("instmem.dat", inst_ram); // reading program into memory
 
-	logic [11:0] PC_FETCH;// = 12'd0;
+	logic [11:0] PC_FETCH;
 	logic [11:0] PC_EX;
 	logic [31:0] instruction_EX;
 
+	// glue logic for jumps
+	logic [31:0] jal_addr_EX;
+	logic [31:0] jalr_addr_EX;
+	logic [31:0] branch_addr_EX;
+	logic [1:0] pcsrc_EX = 2'd0;
+	logic stall_EX;
 	logic stall_FETCH;
-	logic stall_EX = 1'b0;
 
 	// holding decoded instruction fields
 	logic [6:0] opcode;
@@ -26,7 +31,6 @@ module cpu(
 	logic [4:0] rd;
 	logic [11:0] imm_I;
 	logic [19:0] imm_U;
-	logic Z;
 
 	// holding output of control unit
 	logic alusrc_EX;
@@ -99,32 +103,21 @@ module cpu(
 	);
  
 	// connecting the ALU
-	alu _alu (
-		.A(readdata1),
-		.B(ALU_INP_B),
-		.R(R_EX),
-		.op(aluop_EX),
-		.zero(Z)
-	);
+	alu _alu (.A(readdata1), .B(ALU_INP_B), .R(R_EX), .op(aluop_EX));
 
 	always_comb begin
 		case (regsel_WB)
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
-			2'd3 : writedata = PC_EX;
+			2'd3 : writedata = {20'b0, PC_EX};
 			default: writedata = 32'b0;
 		endcase
 
-		if (alusrc_EX==1'b1) begin
-			if (imm_I[11]==0) begin
-				ALU_INP_B = {20'b0, imm_I};
-			end else begin
-				ALU_INP_B = {20'b0-1, imm_I};
-			end
-		end else begin
-			ALU_INP_B = readdata2;
-		end
+		case (alusrc_EX)
+			1'b1 : ALU_INP_B = {{20{imm_I[11]}}, imm_I};
+			1'b0 : ALU_INP_B = readdata2;
+		endcase
 	end
 
 	always_ff @(posedge clk) begin
@@ -133,12 +126,14 @@ module cpu(
 			instruction_EX <= 32'd0;
 		end else begin
 			// fetching the next instruction
-			if (stall_FETCH) begin
-				instruction_EX <= 32'd0;
-			end else begin
-				PC_FETCH <= PC_FETCH + 1'b1;
-				instruction_EX <= inst_ram[PC_FETCH];
-			end
+			PC_EX <= PC_FETCH;
+			case (pcsrc_EX)
+				2'd0 : PC_FETCH <= PC_FETCH + 1;
+				2'd1 : PC_FETCH <= jal_addr_EX;
+				2'd2 : PC_FETCH <= jalr_addr_EX;
+				2'd3 : PC_FETCH <= branch_addr_EX;
+			endcase
+			instruction_EX <= inst_ram[PC_FETCH];
 
 			stall_EX <= stall_FETCH;
 
