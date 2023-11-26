@@ -83,6 +83,7 @@ module controlunit(
 			regwrite=1'd1;
 			pcsrc=2'd1;
 			stall_FETCH=1'b1;
+			regsel=2'd3;
 		end
 
 		// stalling instruction

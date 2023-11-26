@@ -127,7 +127,7 @@ module cpu(
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
-			2'd3 : writedata = {20'b0, PC_EX};
+			2'd3 : writedata = {20'b0, PC_FETCH};
 			default: writedata = 32'b0;
 		endcase
 
