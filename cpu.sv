@@ -30,6 +30,7 @@ module cpu(
 	logic [2:0] funct3;
 	logic [4:0] rd;
 	logic [11:0] imm_I;
+	logic [11:0] imm_I_WB;
 	logic [19:0] imm_U;
 
 	// holding output of control unit
@@ -135,18 +136,34 @@ module cpu(
 			endcase
 			instruction_EX <= inst_ram[PC_FETCH];
 
+			// propogate stall for branches
 			stall_EX <= stall_FETCH;
 
 			// copying execute registers to writeback registers
 			regdest_WB <= rd;
 			regwrite_WB <= regwrite_EX;
 			regsel_WB <= regsel_EX;
+			
 			GPIO_we_WB <= GPIO_we;
-			GPIO_in_WB <= io0_in;
 			GPIO_out_WB <= readdata1;
 			R_WB <= R_EX;
+
 			imm_U_WB <= imm_U;
-			if (GPIO_we_WB) io2_out <= GPIO_out_WB;
+			imm_I_WB <= imm_I;
+
+			// reading from io
+			case (imm_I) 
+				12'hf00 : GPIO_in_WB <= io0_in;
+				12'hf01 : GPIO_in_WB <= io1_in;
+			endcase
+
+			// writing to io
+			if (GPIO_we_WB) begin
+				case (imm_I_WB)
+					12'hf02 : io2_out <= GPIO_out_WB;
+					12'hf03 : io3_out <= GPIO_out_WB;
+				endcase
+			end
 		end
 	end
 

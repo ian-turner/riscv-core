@@ -58,6 +58,12 @@ module simtop;
 		for (int i=0; i<32; i++) begin
 			$display("register %d: 0x%h", i, _cpu._regfile.mem[i]);
 		end
+
+		// reading the io registers
+		$display("io0: %d", _cpu.io0_in);
+		$display("io1: %d", _cpu.io1_in);
+		$display("io2: %d", _cpu.io2_out);
+		$display("io3: %d", _cpu.io3_out);
 	end
 	
 	// drive clock

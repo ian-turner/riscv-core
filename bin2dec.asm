@@ -17,7 +17,7 @@ addi x5, zero, 10		# setting x5 to 10 to use later for mul
 				# (hard-coded)
 				
 
-csrrw x2, 0, zero		# reading input value from switches
+csrrw x2, 0xf00, zero		# reading input value from switches
 
 # digit 1
 mul x3, x2, x1			# multiply value by 0.1 to get fractional bits
@@ -74,4 +74,4 @@ mulhu x2, x2, x1
 mulhu x7, x3, x5
 or x6, x6, x7
 
-csrrw zero, 2, x6		# writing back out to hex
+csrrw zero, 0xf02, x6		# writing back out to hex
