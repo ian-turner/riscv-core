@@ -14,7 +14,8 @@ module controlunit(
 	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
 	output logic [3:0] aluop,	
-	output logic gpio_we		// enables writing to the output register
+	output logic gpio_we,		// enables writing to the output register
+	output logic [1:0] pcsrc
 );
 
 	// combinational logic block
@@ -25,6 +26,8 @@ module controlunit(
 		regsel=2'd0;
 		aluop=4'd0;
 		gpio_we=1'd0;
+		pcsrc=2'd0;
+		stall_FETCH=1'b0;
 
 		// csrrw instruction
 		if (opcode==7'b1110011 && funct3==3'b001) begin
@@ -71,12 +74,19 @@ module controlunit(
 
 		// U-type instructions
 		if (opcode==7'b0110111) begin
-			regwrite = 1'd1;
+			regwrite=1'd1;
 			regsel=2'd1;
 		end
 
+		// jal
+		if (opcode==7'b1101111) begin
+			regwrite=1'd1;
+			pcsrc=2'd1;
+			stall_FETCH=1'b1;
+		end
+
 		// stalling instruction
-		if (stall_EX==1'b1) regwrite = 1'b0;
+		if (stall_EX==1'b1) regwrite=1'b0;
 	end
 
 endmodule

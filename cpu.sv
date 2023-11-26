@@ -14,14 +14,6 @@ module cpu(
 	logic [11:0] PC_EX;
 	logic [31:0] instruction_EX;
 
-	// glue logic for jumps
-	logic [31:0] jal_addr_EX;
-	logic [31:0] jalr_addr_EX;
-	logic [31:0] branch_addr_EX;
-	logic [1:0] pcsrc_EX = 2'd0;
-	logic stall_EX;
-	logic stall_FETCH;
-
 	// holding decoded instruction fields
 	logic [6:0] opcode;
 	logic [6:0] funct7;
@@ -61,6 +53,15 @@ module cpu(
 	logic [31:0] R_EX;
 	logic [31:0] ALU_INP_B;
 
+	// glue logic for jumps
+	logic [31:0] jal_addr_EX;
+	logic [31:0] jalr_addr_EX;
+	logic [20:0] jal_offset_EX;
+	logic [31:0] branch_addr_EX;
+	logic [1:0] pcsrc_EX;
+	logic stall_EX;
+	logic stall_FETCH;
+
 	// connecting the decoder
 	decoder _decoder (
 		.instruction(instruction_EX),
@@ -82,29 +83,44 @@ module cpu(
 		.readaddr2(rs2),
 		.writeaddr(regdest_WB),
 		.writedata(writedata),
-
 		.readdata1(readdata1),
 		.readdata2(readdata2)
 	);
 
 	// connecting the control unit
 	controlunit _controlunit (
-		// inputs
 		.opcode(opcode),
 		.funct3(funct3),
 		.funct7(funct7),
 		.csr(imm_I),
-
-		// outputs
 		.alusrc(alusrc_EX),
 		.regwrite(regwrite_EX),
 		.regsel(regsel_EX),
 		.aluop(aluop_EX),
-		.gpio_we(GPIO_we)
+		.gpio_we(GPIO_we),
+		.pcsrc(pcsrc_EX),
+		.stall_EX(stall_EX),
+		.stall_FETCH(stall_FETCH)
 	);
  
 	// connecting the ALU
-	alu _alu (.A(readdata1), .B(ALU_INP_B), .R(R_EX), .op(aluop_EX));
+	alu _alu (
+		.A(readdata1),
+		.B(ALU_INP_B),
+		.R(R_EX),
+		.op(aluop_EX)
+	);
+
+	// jump logic
+	assign jal_offset_EX = {
+		instruction_EX[31],
+		instruction_EX[19:12],
+		instruction_EX[20],
+		instruction_EX[30:21],
+		1'b0
+	};
+
+	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
 
 	always_comb begin
 		case (regsel_WB)
@@ -127,6 +143,7 @@ module cpu(
 			instruction_EX <= 32'd0;
 		end else begin
 			// fetching the next instruction
+			instruction_EX <= inst_ram[PC_FETCH];
 			PC_EX <= PC_FETCH;
 			case (pcsrc_EX)
 				2'd0 : PC_FETCH <= PC_FETCH + 1;
@@ -134,10 +151,6 @@ module cpu(
 				2'd2 : PC_FETCH <= jalr_addr_EX;
 				2'd3 : PC_FETCH <= branch_addr_EX;
 			endcase
-			instruction_EX <= inst_ram[PC_FETCH];
-
-			// propogate stall for branches
-			stall_EX <= stall_FETCH;
 
 			// copying execute registers to writeback registers
 			regdest_WB <= rd;
@@ -148,6 +161,7 @@ module cpu(
 			GPIO_out_WB <= readdata1;
 			R_WB <= R_EX;
 
+			stall_EX <= stall_FETCH;
 			imm_U_WB <= imm_U;
 			imm_I_WB <= imm_I;
 
