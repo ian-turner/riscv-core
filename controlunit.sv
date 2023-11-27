@@ -59,7 +59,7 @@ module controlunit(
 		end
 
 		// I-type instructions
-		if (opcode==7'b0010011) begin
+		else if (opcode==7'b0010011) begin
 			regwrite = 1'd1;
 			alusrc=1'd1;
 			regsel=2'd2;
@@ -73,21 +73,30 @@ module controlunit(
 		end
 
 		// U-type instructions
-		if (opcode==7'b0110111) begin
+		else if (opcode==7'b0110111) begin
 			regwrite=1'd1;
 			regsel=2'd1;
 		end
 
 		// jal
-		if (opcode==7'b1101111) begin
-			regwrite=1'd1;
+		else if (opcode==7'b1101111) begin
 			pcsrc=2'd1;
+			regwrite=1'd1;
 			stall_FETCH=1'b1;
 			regsel=2'd3;
 		end
 
-		// stalling instruction
-		if (stall_EX==1'b1) regwrite=1'b0;
+		// jalr
+		else if (opcode==7'b1100111) begin
+			pcsrc=2'd2;
+			regwrite=1'd1;
+			stall_FETCH=1'b1;
+			regsel=2'd3;
+		end
+		
+		if (stall_EX) begin
+			regwrite=1'd0;
+		end
 	end
 
 endmodule

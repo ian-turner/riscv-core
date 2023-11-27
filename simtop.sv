@@ -50,13 +50,16 @@ module simtop;
 		KEY <= 4'hf;
 
 		// 10 ticks = 1 clock tick
+		
+		for (int i=0; i<10; i++) begin
+			#10;
 
-		#10000; // <- 1000 clock ticks
+			$display("PC_FETCH: %d, instruction: %b", _cpu.PC_FETCH, _cpu.instruction_EX);
 
-		// verify register file
-		// we can ignore 0 register because 0 is hard coded in regfile
-		for (int i=0; i<32; i++) begin
-			$display("register %d: 0x%h", i, _cpu._regfile.mem[i]);
+			// read register file
+			for (int i=0; i<32; i++) begin
+				$display("register %d: 0x%h", i, _cpu._regfile.mem[i]);
+			end
 		end
 
 		// reading the io registers
@@ -72,12 +75,9 @@ module simtop;
 		clk <= 1'b1; #5;
 	end
 
-	always_comb begin
-		io0_in = {14'b0, SW};
-	end
-	
 	// assign simulated switch values
-	assign SW = 18'd12345;
+	assign SW = 18'd2;
+	assign io0_in = {14'b0, SW};
 
 endmodule
 
