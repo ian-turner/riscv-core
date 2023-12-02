@@ -87,6 +87,14 @@ module controlunit(
 				pcsrc_EX=2'd1;
 				stall_FETCH=1'd1;
 			end
+
+			// jalr
+			else if (opcode==7'b1100111) begin
+				regwrite=1'd1;
+				regsel=2'd3;
+				pcsrc_EX=2'd2;
+				stall_FETCH=1'd1;
+			end
 		end
 	end
 

@@ -51,7 +51,7 @@ module simtop;
 
 		// 10 ticks = 1 clock tick
 		
-		for (int i=0; i<10; i++) begin
+		for (int i=0; i<15; i++) begin
 			#10; // 1 clock step
 
 			$display("clock cycle %0d", i);
@@ -67,6 +67,7 @@ module simtop;
 			$display("\tstall_EX = %0d", _cpu.stall_EX);
 			$display("\tjal_addr = %0h", _cpu.jal_addr_EX);
 			$display("\tjalr_addr = %0h", _cpu.jalr_addr_EX);
+			$display("\twritedata = %0h", _cpu.writedata);
 
 			// reading the io registers
 			$display("\tio0: %d", _cpu.io0_in);

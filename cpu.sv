@@ -98,7 +98,7 @@ module cpu(
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
 			2'd3 : writedata = {18'b0, PC_EX, 2'b0};
-			default: writedata = 32'b0;
+			default : writedata = 32'b0;
 		endcase
 
 		case (alusrc_EX)
@@ -114,7 +114,7 @@ module cpu(
 		instruction_EX[20], instruction_EX[30:21], 1'b0};
 	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
 
-	assign jalr_addr_EX = readdata1_EX[13:2] + {{2{imm_I[11]}}, imm_I[11:2]};
+	assign jalr_addr_EX = readdata1[13:2] + {{2{imm_I[11]}}, imm_I[11:2]};
 	assign branch_addr_EX = 32'd0;
 
 	always_ff @(posedge clk) begin
