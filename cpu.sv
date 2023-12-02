@@ -114,7 +114,7 @@ module cpu(
 		instruction_EX[20], instruction_EX[30:21], 1'b0};
 	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
 
-	assign jalr_addr_EX = readdata1_EX[11:0] + {{2{imm_I[11]}}, imm_I[11:2]};
+	assign jalr_addr_EX = readdata1_EX[13:2] + {{2{imm_I[11]}}, imm_I[11:2]};
 	assign branch_addr_EX = 32'd0;
 
 	always_ff @(posedge clk) begin
