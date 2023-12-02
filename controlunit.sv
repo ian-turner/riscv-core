@@ -12,6 +12,7 @@ module controlunit(
 	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
 	output logic [3:0] aluop,	
+	output logic [1:0] pcsrc_EX,
 	output logic gpio_we		// enables writing to the output register
 );
 
@@ -23,6 +24,7 @@ module controlunit(
 		regsel=2'd0;
 		aluop=4'd0;
 		gpio_we=1'd0;
+		pcsrc_EX=2'd0;
 
 		// csrrw instruction
 		if (opcode==7'b1110011 && funct3==3'b001) begin
@@ -71,6 +73,12 @@ module controlunit(
 		else if (opcode==7'b0110111) begin
 			regwrite=1'd1;
 			regsel=2'd1;
+		end
+
+		// jal
+		else if (opcode==7'b1101111) begin
+			regwrite=1'd1;
+			regsel=2'd2;
 		end
 	end
 
