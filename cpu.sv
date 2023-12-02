@@ -11,7 +11,6 @@ module cpu(
 	initial $readmemh("instmem.dat", inst_ram); // reading program into memory
 
 	logic [11:0] PC_FETCH;
-	logic [11:0] PC_EX;
 	logic [31:0] instruction_EX;
 
 	// holding decoded instruction fields
@@ -54,16 +53,6 @@ module cpu(
 	logic [31:0] R_EX;
 	logic [31:0] ALU_INP_B;
 
-	// glue logic for jumps
-	logic [20:0] jal_offset;
-	logic [31:0] jal_addr;
-	logic [11:0] jalr_offset;
-	logic [31:0] jalr_addr;
-	logic [31:0] branch_addr_EX;
-	logic [1:0] pcsrc_EX;
-	logic stall_EX;
-	logic stall_FETCH;
-
 	// connecting the decoder
 	decoder _decoder (
 		.instruction(instruction_EX),
@@ -99,10 +88,7 @@ module cpu(
 		.regwrite(regwrite_EX),
 		.regsel(regsel_EX),
 		.aluop(aluop_EX),
-		.gpio_we(GPIO_we),
-		.pcsrc(pcsrc_EX),
-		.stall_EX(stall_EX),
-		.stall_FETCH(stall_FETCH)
+		.gpio_we(GPIO_we)
 	);
  
 	// connecting the ALU
@@ -113,25 +99,11 @@ module cpu(
 		.op(aluop_EX)
 	);
 
-	// jump logic
-	assign jal_offset = {
-		instruction_EX[31],
-		instruction_EX[19:12],
-		instruction_EX[20],
-		instruction_EX[30:21],
-		1'b0
-	};
-	assign jal_addr = PC_EX + jal_offset[13:2];
-
-	assign jalr_offset = instruction_EX[31:20];
-	assign jalr_addr = readdata1_EX[11:0] + {{2{jalr_offset[11]}}, jalr_offset[11:2]};
-
 	always_comb begin
 		case (regsel_WB)
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
-			2'd3 : writedata = {20'b0, PC_EX};
 			default: writedata = 32'b0;
 		endcase
 
@@ -148,14 +120,7 @@ module cpu(
 		end else begin
 			// fetching the next instruction
 			instruction_EX <= inst_ram[PC_FETCH];
-			case (pcsrc_EX)
-				2'd0 : PC_FETCH <= PC_FETCH + 1;
-				2'd1 : PC_FETCH <= jal_addr;
-				2'd2 : PC_FETCH <= jalr_addr;
-				2'd3 : PC_FETCH <= branch_addr_EX;
-			endcase
-
-			PC_EX <= PC_FETCH;
+			PC_FETCH <= PC_FETCH + 1;
 
 			// copying execute registers to writeback registers
 			regdest_WB <= rd;
@@ -169,7 +134,6 @@ module cpu(
 
 			imm_U_WB <= imm_U;
 			imm_I_WB <= imm_I;
-			stall_EX <= stall_FETCH;
 
 			// reading from io
 			case (imm_I) 
