@@ -14,12 +14,6 @@ module cpu(
 	logic [31:0] instruction_EX;
 
 	// holding decoded instruction fields
-	logic [6:0] opcode;
-	logic [6:0] funct7;
-	logic [4:0] rs2;
-	logic [4:0] rs1;
-	logic [2:0] funct3;
-	logic [4:0] rd;
 	logic [11:0] imm_I;
 	logic [11:0] imm_I_WB;
 	logic [19:0] imm_U;
@@ -53,25 +47,12 @@ module cpu(
 	logic [31:0] R_EX;
 	logic [31:0] ALU_INP_B;
 
-	// connecting the decoder
-	decoder _decoder (
-		.instruction(instruction_EX),
-		.funct3(funct3),
-		.funct7(funct7),
-		.rs1(rs1),
-		.rs2(rs2),
-		.rd(rd),
-		.imm_I(imm_I),
-		.imm_U(imm_U),
-		.opcode(opcode)
-	);
-
 	// connecting the register file
 	regfile _regfile (
 		.clk(clk),
 		.we(regwrite_WB),
-		.readaddr1(rs1),
-		.readaddr2(rs2),
+		.readaddr1(instruction_EX[19:15]),
+		.readaddr2(instruction_EX[24:20]),
 		.writeaddr(regdest_WB),
 		.writedata(writedata),
 		.readdata1(readdata1),
@@ -80,10 +61,10 @@ module cpu(
 
 	// connecting the control unit
 	controlunit _controlunit (
-		.opcode(opcode),
-		.funct3(funct3),
-		.funct7(funct7),
-		.csr(imm_I),
+		.opcode(instruction_EX[6:0]),
+		.funct3(instruction_EX[14:12]),
+		.funct7(instruction_EX[31:25]),
+		.csr(instruction_EX[31:20]),
 		.alusrc(alusrc_EX),
 		.regwrite(regwrite_EX),
 		.regsel(regsel_EX),
@@ -113,6 +94,9 @@ module cpu(
 		endcase
 	end
 
+	assign imm_I = instruction_EX[31:20];
+	assign imm_U = instruction_EX[31:12];
+
 	always_ff @(posedge clk) begin
 		if (~rst_n) begin // starting at 0
 			PC_FETCH <= 12'd0;
@@ -123,7 +107,7 @@ module cpu(
 			PC_FETCH <= PC_FETCH + 1;
 
 			// copying execute registers to writeback registers
-			regdest_WB <= rd;
+			regdest_WB <= instruction_EX[11:7];
 			readdata1_EX <= readdata1;
 			regwrite_WB <= regwrite_EX;
 			
