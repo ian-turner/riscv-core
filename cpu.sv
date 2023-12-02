@@ -53,6 +53,8 @@ module cpu(
 	logic [11:0] jalr_addr_EX;
 	logic [11:0] branch_addr_EX;
 	logic [1:0] pcsrc_EX;
+	logic stall_EX;
+	logic stall_FETCH;
 
 	// connecting the register file
 	regfile _regfile (
@@ -77,7 +79,9 @@ module cpu(
 		.regsel(regsel_EX),
 		.aluop(aluop_EX),
 		.gpio_we(GPIO_we),
-		.pcsrc_EX(pcsrc_EX)
+		.pcsrc_EX(pcsrc_EX),
+		.stall_EX(stall_EX),
+		.stall_FETCH(stall_FETCH)
 	);
  
 	// connecting the ALU
@@ -120,7 +124,7 @@ module cpu(
 		end else begin
 			// fetching the next instruction
 			instruction_EX <= inst_ram[PC_FETCH];
-			case (pcsrc_EX)
+			case (pcsrc_EX & {2{~stall_EX}})
 				2'd0 : PC_FETCH <= PC_FETCH + 1;
 				2'd1 : PC_FETCH <= jal_addr_EX;
 				2'd2 : PC_FETCH <= jalr_addr_EX;
@@ -133,6 +137,7 @@ module cpu(
 			readdata1_EX <= readdata1;
 			regwrite_WB <= regwrite_EX;
 			regsel_WB <= regsel_EX;
+			stall_EX <= stall_FETCH;
 
 			GPIO_we_WB <= GPIO_we;
 			GPIO_out_WB <= readdata1;

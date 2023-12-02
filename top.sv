@@ -71,28 +71,6 @@ module top (
 		clkdiv <= clkdiv + 1;
 	end
 
-	always @(posedge ledclk) begin
-		/* going left and we are at the far left, time to turn around */
-		if ( (ledstate == 0) && (leds == 26'b10000000000000000000000000) ) begin
-			ledstate <= 1;
-			leds <= leds >> 1;
-
-		/* going left and not at the far left, keep going */
-		end else if (ledstate == 0) begin
-			ledstate <= 0;
-			leds <= leds << 1;
-
-		/* going right and we are at the far right, turn around */
-		end else if ( (ledstate == 1) && (leds == 26'b1) ) begin
-			ledstate <= 0;
-			leds <= leds << 1;
-
-		/* going right, and we aren't at the far right */
-		end else begin
-			leds <= leds >> 1;
-		end
-	end
-
 	// connecting displays to cpu output
 	logic [31:0] cpu_io2_out;
 	logic [31:0] none;

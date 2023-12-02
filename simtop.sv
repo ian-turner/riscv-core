@@ -52,21 +52,28 @@ module simtop;
 		// 10 ticks = 1 clock tick
 		
 		for (int i=0; i<10; i++) begin
-			#10;
+			#10; // 1 clock step
 
-			$display("PC_FETCH: %d, instruction: %b", _cpu.PC_FETCH, _cpu.instruction_EX);
+			$display("clock cycle %0d", i);
 
-			// read register file
-			for (int i=0; i<32; i++) begin
-				$display("register %d: 0x%h", i, _cpu._regfile.mem[i]);
-			end
+			$display("\tPC_EX = %0d", _cpu.PC_EX);
+			$display("\tPC_FETCH = %0d", _cpu.PC_FETCH);
+			$display("\topcode = %b", _cpu.instruction_EX[6:0]);
+			$display("\tregwrite = %0b", _cpu.regwrite_EX);
+			$display("\tregsel = %0d", _cpu.regsel_EX);
+			$display("\tpcsrc = %0d", _cpu.pcsrc_EX);
+			$display("\tgpio_we_WB = %0b", _cpu.GPIO_we_WB);
+			$display("\tstall_FETCH = %0d", _cpu.stall_FETCH);
+			$display("\tstall_EX = %0d", _cpu.stall_EX);
+			$display("\tjal_addr = %0h", _cpu.jal_addr_EX);
+			$display("\tjalr_addr = %0h", _cpu.jalr_addr_EX);
+
+			// reading the io registers
+			$display("\tio0: %d", _cpu.io0_in);
+			$display("\tio1: %d", _cpu.io1_in);
+			$display("\tio2: %d", _cpu.io2_out);
+			$display("\tio3: %d", _cpu.io3_out);
 		end
-
-		// reading the io registers
-		$display("io0: %d", _cpu.io0_in);
-		$display("io1: %d", _cpu.io1_in);
-		$display("io2: %d", _cpu.io2_out);
-		$display("io3: %d", _cpu.io3_out);
 	end
 	
 	// drive clock
