@@ -46,15 +46,18 @@ module cpu(
 
 	// glue registers for ALU
 	logic [31:0] R_EX;
-	logic [31:0] ALU_INP_B;
+	logic [31:0] B_EX;
 
+	// glue registers for branches
 	logic [19:0] jal_offset_EX;
 	logic [11:0] jal_addr_EX;
 	logic [11:0] jalr_addr_EX;
+	logic [13:0] branch_offset_EX;
 	logic [11:0] branch_addr_EX;
-	logic [1:0] pcsrc_EX;
+	logic [1:0] pcsrc_EX;			// selects what to set PC_FETCH to
 	logic stall_EX;
-	logic stall_FETCH;
+	logic stall_FETCH;			// stall next instruction for jal/jalr
+	logic br_EX;				// indicates branching
 
 	// connecting the register file
 	regfile _regfile (
@@ -81,17 +84,19 @@ module cpu(
 		.gpio_we(GPIO_we),
 		.pcsrc_EX(pcsrc_EX),
 		.stall_EX(stall_EX),
-		.stall_FETCH(stall_FETCH)
+		.stall_FETCH(stall_FETCH),
+		.br(br_EX)
 	);
  
 	// connecting the ALU
 	alu _alu (
 		.A(readdata1),
-		.B(ALU_INP_B),
+		.B(B_EX),
 		.R(R_EX),
 		.op(aluop_EX)
 	);
 
+	// input mux for alu/reg write
 	always_comb begin
 		case (regsel_WB)
 			2'd0 : writedata = GPIO_in_WB;
@@ -102,34 +107,43 @@ module cpu(
 		endcase
 
 		case (alusrc_EX)
-			1'b1 : ALU_INP_B = {{20{imm_I[11]}}, imm_I};
-			1'b0 : ALU_INP_B = readdata2;
+			1'd0 : B_EX = readdata2;
+			1'd1 : B_EX = {{20{imm_I[11]}}, imm_I};
 		endcase
 	end
 
 	assign imm_I = instruction_EX[31:20];
 	assign imm_U = instruction_EX[31:12];
 
+	// jump offsets
 	assign jal_offset_EX = {instruction_EX[31], instruction_EX[19:12],
 		instruction_EX[20], instruction_EX[30:21], 1'b0};
 	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
 
 	assign jalr_addr_EX = readdata1[13:2] + {{2{imm_I[11]}}, imm_I[11:2]};
-	assign branch_addr_EX = 32'd0;
 
+	assign branch_offset_EX = {instruction_EX[31], instruction_EX[7],
+		instruction_EX[30:25], instruction_EX[11:8], 1'b0};
+	assign branch_addr_EX = PC_EX + {branch_offset_EX[12], branch_offset_EX[12:2]};
+
+	// clock cycle
 	always_ff @(posedge clk) begin
 		if (~rst_n) begin // starting at 0
 			PC_FETCH <= 12'd0;
 			instruction_EX <= 32'd0;
 		end else begin
 			// fetching the next instruction
-			instruction_EX <= inst_ram[PC_FETCH];
-			case (pcsrc_EX & {2{~stall_EX}})
-				2'd0 : PC_FETCH <= PC_FETCH + 1;
-				2'd1 : PC_FETCH <= jal_addr_EX;
-				2'd2 : PC_FETCH <= jalr_addr_EX;
-				2'd3 : PC_FETCH <= branch_addr_EX;
-			endcase
+			if (stall_EX) begin
+				instruction_EX <= 32'd0;
+			end else begin
+				instruction_EX <= inst_ram[PC_FETCH];
+				case (pcsrc_EX)
+					2'd0 : PC_FETCH <= PC_FETCH + 1;
+					2'd1 : PC_FETCH <= jal_addr_EX;
+					2'd2 : PC_FETCH <= jalr_addr_EX;
+					2'd3 : PC_FETCH <= branch_addr_EX;
+				endcase
+			end
 			PC_EX <= PC_FETCH;
 
 			// copying execute registers to writeback registers

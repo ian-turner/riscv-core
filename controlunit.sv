@@ -9,13 +9,14 @@ module controlunit(
 	output logic alusrc,		// chooses between readdata2 and imm for
 					// ALU input
 	output logic regwrite,
+	input logic stall_EX,
 	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
 	output logic [3:0] aluop,	
 	output logic [1:0] pcsrc_EX,
-	input logic stall_EX,
+	output logic gpio_we,		// enables writing to the output register
 	output logic stall_FETCH,
-	output logic gpio_we		// enables writing to the output register
+	output logic br
 );
 
 	// combinational logic block
@@ -94,6 +95,12 @@ module controlunit(
 				regsel=2'd3;
 				pcsrc_EX=2'd2;
 				stall_FETCH=1'd1;
+			end
+
+			// branches
+			else if (opcode==7'b1100011) begin
+				br=1'b1;
+				if (funct3==3'b000) aluop=4'b0100;
 			end
 		end
 	end

@@ -68,12 +68,13 @@ module simtop;
 			$display("\tjal_addr = %0h", _cpu.jal_addr_EX);
 			$display("\tjalr_addr = %0h", _cpu.jalr_addr_EX);
 			$display("\twritedata = %0h", _cpu.writedata);
+			$display("\tR_EX = %0d", _cpu.R_EX);
 
 			// reading the io registers
-			$display("\tio0: %d", _cpu.io0_in);
-			$display("\tio1: %d", _cpu.io1_in);
-			$display("\tio2: %d", _cpu.io2_out);
-			$display("\tio3: %d", _cpu.io3_out);
+			$display("\tio0: %h", _cpu.io0_in);
+			$display("\tio1: %h", _cpu.io1_in);
+			$display("\tio2: %h", _cpu.io2_out);
+			$display("\tio3: %h", _cpu.io3_out);
 		end
 	end
 	
