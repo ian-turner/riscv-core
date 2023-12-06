@@ -9,7 +9,7 @@ module controlunit(
 	output logic alusrc,		// chooses between readdata2 and imm for
 					// ALU input
 	output logic regwrite,
-	output logic [2:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
+	output logic [1:0] regsel, 	// selects between GPIO_in / imm_I/U or ALU 
 				   	// output as input for write data in regfile
 	output logic [3:0] aluop,	
 	output logic gpio_we,		// enables writing to the output register
@@ -85,6 +85,14 @@ module controlunit(
 			pcsrc=2'd2;
 			regwrite=1'b1;
 			regsel=2'd3;
+		end
+
+		// b-type
+		else if (opcode==7'b1100011) begin
+			// beq
+			if (funct3==3'b000) begin
+				aluop=4'b0100;
+			end
 		end
 	end
 
