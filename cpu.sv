@@ -10,10 +10,6 @@ module cpu(
 	logic [31:0] inst_ram [4095:0]; // declaring ram
 	initial $readmemh("instmem.dat", inst_ram); // reading program into memory
 
-	logic [11:0] PC_FETCH;
-	logic [11:0] PC_EX;
-	logic [31:0] instruction_EX;
-
 	// holding decoded instruction fields
 	logic [11:0] imm_I;
 	logic [11:0] imm_I_WB;
@@ -48,16 +44,16 @@ module cpu(
 	logic [31:0] R_EX;
 	logic [31:0] B_EX;
 
-	// glue registers for branches
+	// fetching logic
+	logic [11:0] PC_FETCH;
+	logic [11:0] PC_EX;
+	logic [11:0] PC_NEXT;
+	logic [11:0] PC1;
+	logic [31:0] instruction_EX;
 	logic [19:0] jal_offset_EX;
 	logic [11:0] jal_addr_EX;
-	logic [11:0] jalr_addr_EX;
-	logic [13:0] branch_offset_EX;
-	logic [11:0] branch_addr_EX;
-	logic [1:0] pcsrc_EX;			// selects what to set PC_FETCH to
 	logic stall_EX;
-	logic stall_FETCH;			// stall next instruction for jal/jalr
-	logic br_EX;				// indicates branching
+	logic pcsrc_EX;
 
 	// connecting the register file
 	regfile _regfile (
@@ -82,81 +78,53 @@ module cpu(
 		.regsel(regsel_EX),
 		.aluop(aluop_EX),
 		.gpio_we(GPIO_we),
-		.pcsrc_EX(pcsrc_EX),
-		.stall_EX(stall_EX),
-		.stall_FETCH(stall_FETCH),
-		.br(br_EX)
+		.stall(stall_EX),
+		.pcsrc(pcsrc_EX)
 	);
  
 	// connecting the ALU
-	alu _alu (
-		.A(readdata1),
-		.B(B_EX),
-		.R(R_EX),
-		.op(aluop_EX)
-	);
+	alu _alu (.A(readdata1), .B(B_EX), .R(R_EX), .op(aluop_EX));
 
-	// input mux for alu/reg write
+	// input mux
+	assign B_EX = (alusrc_EX==1'b0) ? readdata2 : {{20{imm_I[11]}}, imm_I};
 	always_comb begin
 		case (regsel_WB)
 			2'd0 : writedata = GPIO_in_WB;
 			2'd1 : writedata = {imm_U_WB, 12'b0};
 			2'd2 : writedata = R_WB;
-			2'd3 : writedata = {18'b0, PC_EX, 2'b0};
-			default : writedata = 32'b0;
-		endcase
-
-		case (alusrc_EX)
-			1'd0 : B_EX = readdata2;
-			1'd1 : B_EX = {{20{imm_I[11]}}, imm_I};
+			2'd3 : writedata = {18'd0, PC_EX, 2'd0}; // for jumps
 		endcase
 	end
 
-	assign imm_I = instruction_EX[31:20];
-	assign imm_U = instruction_EX[31:12];
-
-	// jump offsets
+	// jump addr
 	assign jal_offset_EX = {instruction_EX[31], instruction_EX[19:12],
 		instruction_EX[20], instruction_EX[30:21], 1'b0};
 	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
 
-	assign jalr_addr_EX = readdata1[13:2] + {{2{imm_I[11]}}, imm_I[11:2]};
-
-	assign branch_offset_EX = {instruction_EX[31], instruction_EX[7],
-		instruction_EX[30:25], instruction_EX[11:8], 1'b0};
-	assign branch_addr_EX = PC_EX + {branch_offset_EX[12], branch_offset_EX[12:2]};
+	// fetchin logic
+	assign imm_I = instruction_EX[31:20];
+	assign imm_U = instruction_EX[31:12];
+	assign PC1 = PC_FETCH + 12'd1;
+	assign PC_NEXT = (pcsrc_EX==1'b0) ? PC1 : jal_addr_EX;
 
 	// clock cycle
 	always_ff @(posedge clk) begin
 		if (~rst_n) begin // starting at 0
 			PC_FETCH <= 12'd0;
-			instruction_EX <= 32'd0;
 		end else begin
-			// fetching the next instruction
-			if (stall_EX) begin
-				instruction_EX <= 32'd0;
-			end else begin
-				instruction_EX <= inst_ram[PC_FETCH];
-				case (pcsrc_EX)
-					2'd0 : PC_FETCH <= PC_FETCH + 1;
-					2'd1 : PC_FETCH <= jal_addr_EX;
-					2'd2 : PC_FETCH <= jalr_addr_EX;
-					2'd3 : PC_FETCH <= branch_addr_EX;
-				endcase
-			end
+			// reading next instruction
+			PC_FETCH <= PC_NEXT;
 			PC_EX <= PC_FETCH;
+			instruction_EX <= (stall_EX==1'b1) ? 32'd0 : inst_ram[PC_FETCH];
 
 			// copying execute registers to writeback registers
 			regdest_WB <= instruction_EX[11:7];
 			readdata1_EX <= readdata1;
 			regwrite_WB <= regwrite_EX;
 			regsel_WB <= regsel_EX;
-			stall_EX <= stall_FETCH;
-
 			GPIO_we_WB <= GPIO_we;
 			GPIO_out_WB <= readdata1;
 			R_WB <= R_EX;
-
 			imm_U_WB <= imm_U;
 			imm_I_WB <= imm_I;
 
