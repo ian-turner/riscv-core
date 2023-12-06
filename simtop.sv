@@ -67,7 +67,7 @@ module simtop;
 			$display("\tt0: %h", _cpu._regfile.mem[5]);
 			$display("\tt1: %h", _cpu._regfile.mem[6]);
 			$display("\tt2: %h", _cpu._regfile.mem[7]);
-			$display("\tt3: %h", _cpu._regfile.mem[8]);
+			$display("\ts0: %h", _cpu._regfile.mem[8]);
 
 			// reading the io registers
 			$display("\tio0: %h", _cpu.io0_in);

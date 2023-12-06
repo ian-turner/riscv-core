@@ -52,8 +52,10 @@ module cpu(
 	logic [31:0] instruction_EX;
 	logic [19:0] jal_offset_EX;
 	logic [11:0] jal_addr_EX;
+	logic [11:0] jalr_offset;
+	logic [11:0] jalr_addr;
 	logic stall_EX;
-	logic pcsrc_EX;
+	logic [1:0] pcsrc_EX;
 
 	// connecting the register file
 	regfile _regfile (
@@ -100,12 +102,17 @@ module cpu(
 	assign jal_offset_EX = {instruction_EX[31], instruction_EX[19:12],
 		instruction_EX[20], instruction_EX[30:21], 1'b0};
 	assign jal_addr_EX = PC_EX + jal_offset_EX[13:2];
+	assign jalr_offset = instruction_EX[31:20];
+	assign jalr_addr = readdata1[13:2] + {{2{jalr_offset[11]}},jalr_offset[11:2]};
 
 	// fetchin logic
 	assign imm_I = instruction_EX[31:20];
 	assign imm_U = instruction_EX[31:12];
 	assign PC1 = PC_FETCH + 12'd1;
-	assign PC_NEXT = (pcsrc_EX==1'b0) ? PC1 : jal_addr_EX;
+	assign PC_NEXT = (pcsrc_EX==2'd0) ? PC1
+		: (pcsrc_EX==2'd1) ? jal_addr_EX
+		: (pcsrc_EX==2'd2) ? jalr_addr
+		: 12'd0;
 
 	// clock cycle
 	always_ff @(posedge clk) begin

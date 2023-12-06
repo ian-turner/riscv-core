@@ -14,7 +14,7 @@ module controlunit(
 	output logic [3:0] aluop,	
 	output logic gpio_we,		// enables writing to the output register
 	output logic stall,
-	output logic pcsrc
+	output logic [1:0] pcsrc
 );
 
 	// combinational logic block
@@ -26,7 +26,7 @@ module controlunit(
 		aluop=4'd0;
 		gpio_we=1'd0;
 		stall=1'b0;
-		pcsrc=1'b0;
+		pcsrc=2'd0;
 
 		// csrrw instruction
 		if (opcode==7'b1110011 && funct3==3'b001) begin
@@ -74,7 +74,17 @@ module controlunit(
 		// jal
 		else if (opcode==7'b1101111) begin
 			stall=1'b1;
-			pcsrc=1'b1;
+			pcsrc=2'd1;
+			regwrite=1'b1;
+			regsel=2'd3;
+		end
+
+		// jalr
+		else if (opcode==7'b1100111) begin
+			stall=1'b1;
+			pcsrc=2'd2;
+			regwrite=1'b1;
+			regsel=2'd3;
 		end
 	end
 
